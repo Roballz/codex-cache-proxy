@@ -48,7 +48,7 @@
           <option value="global">跟随上面的全局身份模式</option>
         </select>
       </label>
-      <p class="hint">“交给上游”只对 <code>/v1/chat/completions</code> 生效：网关移除 session/prompt_cache_key 等身份字段，让 Sub2API 自己生成兼容缓存键；messages 内容和顺序不会被改写。</p>
+      <p class="hint">“交给上游”只对 <code>/v1/chat/completions</code> 生效：网关不改写 session / prompt_cache_key 等身份字段或相关请求头，原样交给 Sub2API；messages 内容和顺序也不会被改写。</p>
 
       <div id="session-list" class="stack"></div>
     </section>
