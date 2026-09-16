@@ -32,7 +32,7 @@
         <button id="add-session" class="secondary">新建会话</button>
       </div>
       <label>
-        <span>模式</span>
+        <span>Responses / 全局身份模式</span>
         <select id="identity-mode">
           <option value="lock">强制锁定</option>
           <option value="fill">缺失时补齐</option>
@@ -40,6 +40,16 @@
         </select>
       </label>
       <p class="hint">强制锁定会覆盖客户端带来的 session/cache identity；不会修改 previous_response_id、conversation 或 tool call ID。</p>
+
+      <label>
+        <span>Chat Completions 身份策略</span>
+        <select id="cc-identity-mode">
+          <option value="upstream">交给上游自动管理（推荐用于 Sub2API）</option>
+          <option value="global">跟随上面的全局身份模式</option>
+        </select>
+      </label>
+      <p class="hint">“交给上游”只对 <code>/v1/chat/completions</code> 生效：网关移除 session/prompt_cache_key 等身份字段，让 Sub2API 自己生成兼容缓存键；messages 内容和顺序不会被改写。</p>
+
       <div id="session-list" class="stack"></div>
     </section>
 
