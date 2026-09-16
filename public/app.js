@@ -296,6 +296,16 @@ $('#save').addEventListener('click', async () => {
 
 $('#reload').addEventListener('click', () => load());
 
+$('#refresh-diagnostics').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    await loadDiagnostics();
+  } finally {
+    button.disabled = false;
+  }
+});
+
 $('#clear-diagnostics').addEventListener('click', async () => {
   if (!confirm('清空当前进程内的诊断记录？不会影响配置。')) return;
   try {
@@ -306,5 +316,4 @@ $('#clear-diagnostics').addEventListener('click', async () => {
   }
 });
 
-setInterval(loadDiagnostics, 5000);
 load();
