@@ -110,6 +110,7 @@ function collectEditorValues() {
   }));
 
   config.identityMode = $('#identity-mode').value;
+  config.chatCompletionsIdentityMode = $('#cc-identity-mode').value;
   config.diagnosticLimit = Number($('#diagnostic-limit').value);
   config.timeoutSeconds = Number($('#timeout-seconds').value);
   config.allowedOrigins = $('#allowed-origins').value
@@ -120,6 +121,7 @@ function collectEditorValues() {
 
 function render() {
   $('#identity-mode').value = config.identityMode;
+  $('#cc-identity-mode').value = config.chatCompletionsIdentityMode ?? 'upstream';
   $('#diagnostic-limit').value = config.diagnosticLimit;
   $('#timeout-seconds').value = config.timeoutSeconds;
   $('#allowed-origins').value = config.allowedOrigins.join('\n');
@@ -148,12 +150,17 @@ function formatTime(value) {
 function diagNode(record) {
   const article = document.createElement('article');
   article.className = 'item diag';
+  article.dataset.recordId = record.id;
 
   const cached = record.usage?.cachedTokens;
   const input = record.usage?.inputTokens;
   const hitRate = record.usage?.hitRate;
   const comparison = record.comparison || {};
   const identity = record.identity || {};
+  const identityLabel = identity.mode === 'upstream' ? '上游自动管理' : identity.mode || '';
+  const identityValue = identity.mode === 'upstream'
+    ? '由上游派生'
+    : identity.value || identity.source || '透传/未知';
 
   article.innerHTML = `
     <div class="item-head">
@@ -164,8 +171,8 @@ function diagNode(record) {
       <div><span class="muted">时间</span><br>${escapeHtml(formatTime(record.startedAt))}</div>
       <div><span class="muted">上游</span><br>${escapeHtml(record.upstream || '')} (${escapeHtml(record.adapter || '')})</div>
       <div><span class="muted">路径</span><br><code>${escapeHtml(record.path || '')}</code></div>
-      <div><span class="muted">身份模式</span><br>${escapeHtml(identity.mode || '')}${identity.profileName ? ` · ${escapeHtml(identity.profileName)}` : ''}</div>
-      <div><span class="muted">固定 ID</span><br><code>${escapeHtml(identity.value || identity.source || '透传/未知')}</code></div>
+      <div><span class="muted">身份模式</span><br>${escapeHtml(identityLabel)}${identity.profileName ? ` · ${escapeHtml(identity.profileName)}` : ''}</div>
+      <div><span class="muted">身份值</span><br><code>${escapeHtml(identityValue)}</code></div>
       <div><span class="muted">是否覆盖客户端</span><br>${identity.overwritten ? '是' : '否'}</div>
       <div><span class="muted">输入 tokens</span><br>${input ?? '未返回'}</div>
       <div><span class="muted">缓存 tokens</span><br>${cached ?? '未返回'}${hitRate !== null && hitRate !== undefined ? ` · ${hitRate}%` : ''}</div>
@@ -193,16 +200,46 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+function captureDiagnosticUiState(container) {
+  const state = new Map();
+  for (const article of container.querySelectorAll('article.diag[data-record-id]')) {
+    const details = article.querySelector('details');
+    const pre = article.querySelector('pre');
+    state.set(article.dataset.recordId, {
+      open: Boolean(details?.open),
+      preScrollTop: pre?.scrollTop ?? 0,
+      preScrollLeft: pre?.scrollLeft ?? 0,
+    });
+  }
+  return state;
+}
+
+function restoreDiagnosticUiState(node, state) {
+  if (!state) return;
+  const details = node.querySelector('details');
+  const pre = node.querySelector('pre');
+  if (details) details.open = state.open;
+  if (pre) {
+    pre.scrollTop = state.preScrollTop;
+    pre.scrollLeft = state.preScrollLeft;
+  }
+}
+
 async function loadDiagnostics() {
   try {
     const result = await api('/api/diagnostics');
     const container = $('#diagnostics');
+    const uiState = captureDiagnosticUiState(container);
     container.innerHTML = '';
     if (!result.records.length) {
       container.innerHTML = '<p class="muted">还没有生成请求经过网关。</p>';
       return;
     }
-    for (const record of result.records) container.append(diagNode(record));
+    for (const record of result.records) {
+      const node = diagNode(record);
+      container.append(node);
+      restoreDiagnosticUiState(node, uiState.get(record.id));
+    }
   } catch (error) {
     console.error(error);
   }
