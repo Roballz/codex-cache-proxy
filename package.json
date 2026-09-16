@@ -1,0 +1,15 @@
+{
+  "name": "codex-cache-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local multi-upstream proxy with stable Codex cache identity locking and diagnostics",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "check": "node --check server.js && node --check public/app.js"
+  }
+}
