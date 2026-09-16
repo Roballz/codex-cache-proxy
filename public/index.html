@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Codex Cache Proxy</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Local gateway</p>
+        <h1>Codex Cache Proxy</h1>
+        <p class="sub">多上游切换、稳定 Session/Cache Identity、缓存命中诊断。API Key 只透传，不保存。</p>
+      </div>
+      <div id="status" class="status">连接中…</div>
+    </header>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>上游</h2>
+        <button id="add-upstream" class="secondary">添加</button>
+      </div>
+      <div id="upstream-list" class="stack"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>会话锁定</h2>
+        <button id="add-session" class="secondary">新建会话</button>
+      </div>
+      <label>
+        <span>模式</span>
+        <select id="identity-mode">
+          <option value="lock">强制锁定</option>
+          <option value="fill">缺失时补齐</option>
+          <option value="passthrough">原样透传</option>
+        </select>
+      </label>
+      <p class="hint">强制锁定会覆盖客户端带来的 session/cache identity；不会修改 previous_response_id、conversation 或 tool call ID。</p>
+      <div id="session-list" class="stack"></div>
+    </section>
+
+    <section class="card">
+      <h2>高级设置</h2>
+      <div class="grid two">
+        <label>
+          <span>诊断保留条数</span>
+          <input id="diagnostic-limit" type="number" min="10" max="200" inputmode="numeric">
+        </label>
+        <label>
+          <span>上游超时（秒）</span>
+          <input id="timeout-seconds" type="number" min="10" max="3600" inputmode="numeric">
+        </label>
+      </div>
+      <label>
+        <span>允许的浏览器 Origin（每行一个）</span>
+        <textarea id="allowed-origins" rows="5" spellcheck="false"></textarea>
+      </label>
+    </section>
+
+    <section class="actions">
+      <button id="save" class="primary">保存设置</button>
+      <button id="reload" class="secondary">重新载入</button>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>最近诊断</h2>
+        <button id="clear-diagnostics" class="secondary danger">清空</button>
+      </div>
+      <div id="diagnostics" class="stack"></div>
+    </section>
+
+    <section class="card note">
+      <strong>隐私说明</strong>
+      <p>网关配置不会保存 Authorization、API Key 或完整剧情正文。诊断只保留长度、哈希、身份字段状态和上游返回的 token/cache 统计。</p>
+    </section>
+  </main>
+
+  <template id="upstream-template">
+    <article class="item upstream-item">
+      <div class="item-head">
+        <label class="radio-label"><input type="radio" name="active-upstream"> 当前</label>
+        <button class="remove danger secondary">删除</button>
+      </div>
+      <div class="grid two">
+        <label><span>名称</span><input class="name" maxlength="100"></label>
+        <label><span>类型</span><select class="adapter"><option value="sub2api">Sub2API</option><option value="cpa">CLIProxyAPI</option><option value="generic">Generic</option></select></label>
+      </div>
+      <label><span>Base URL</span><input class="base-url" inputmode="url" placeholder="https://example.com/v1"></label>
+    </article>
+  </template>
+
+  <template id="session-template">
+    <article class="item session-item">
+      <div class="item-head">
+        <label class="radio-label"><input type="radio" name="active-session"> 当前</label>
+        <div class="row"><button class="regen secondary">重新生成 ID</button><button class="remove danger secondary">删除</button></div>
+      </div>
+      <label><span>名称</span><input class="name" maxlength="100"></label>
+      <label><span>固定 Session ID</span><input class="value mono" maxlength="128" autocomplete="off" spellcheck="false"></label>
+    </article>
+  </template>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
