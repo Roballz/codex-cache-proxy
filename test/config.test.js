@@ -26,6 +26,19 @@ test('config store persists the generated session identity', () => {
   }
 });
 
+test('config accepts the experimental Responses Bridge mode', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'codex-cache-proxy-'));
+  try {
+    const store = new ConfigStore(directory);
+    const next = store.snapshot();
+    next.chatCompletionsIdentityMode = 'bridge';
+    const saved = store.save(next);
+    assert.equal(saved.chatCompletionsIdentityMode, 'bridge');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('config store writes a backup and never stores arbitrary secret fields', () => {
   const directory = mkdtempSync(join(tmpdir(), 'codex-cache-proxy-'));
   try {
