@@ -32,6 +32,11 @@
         <button id="add-session" class="secondary">新建会话</button>
       </div>
       <p class="hint">每个会话档案独立保存固定 Session ID、TT/ST 接口、身份模式和 Chat Completions 模式。切换“当前”会话并保存后，后续请求使用该档案的完整配置。</p>
+      <label class="radio-label">
+        <input id="reasoning-summary-enabled" type="checkbox">
+        <span>请求可见推理摘要</span>
+      </label>
+      <p class="hint">全局开关。开启后，如果最终请求是 Responses 格式、已经包含 reasoning 且未指定 summary，网关会补 <code>reasoning.summary = "auto"</code>；关闭时完全保持原样。</p>
       <div id="session-list" class="stack"></div>
     </section>
 
