@@ -93,6 +93,12 @@ function sessionNode(item) {
   return node;
 }
 
+function updateInterfaceVisibility() {
+  const mode = $('#client-interface-mode').value;
+  $('#responses-settings').hidden = mode !== 'responses';
+  $('#chat-settings').hidden = mode !== 'chat_completions';
+}
+
 function collectEditorValues() {
   const upstreamNodes = [...document.querySelectorAll('.upstream-item')];
   config.upstreams = upstreamNodes.map(node => ({
@@ -109,6 +115,7 @@ function collectEditorValues() {
     value: node.querySelector('.value').value.trim(),
   }));
 
+  config.clientInterfaceMode = $('#client-interface-mode').value;
   config.identityMode = $('#identity-mode').value;
   config.chatCompletionsIdentityMode = $('#cc-identity-mode').value;
   config.diagnosticLimit = Number($('#diagnostic-limit').value);
@@ -120,11 +127,15 @@ function collectEditorValues() {
 }
 
 function render() {
+  $('#client-interface-mode').value = config.clientInterfaceMode ?? 'chat_completions';
   $('#identity-mode').value = config.identityMode;
-  $('#cc-identity-mode').value = config.chatCompletionsIdentityMode ?? 'upstream';
+  $('#cc-identity-mode').value = ['upstream', 'bridge'].includes(config.chatCompletionsIdentityMode)
+    ? config.chatCompletionsIdentityMode
+    : 'upstream';
   $('#diagnostic-limit').value = config.diagnosticLimit;
   $('#timeout-seconds').value = config.timeoutSeconds;
   $('#allowed-origins').value = config.allowedOrigins.join('\n');
+  updateInterfaceVisibility();
 
   const upstreamList = $('#upstream-list');
   upstreamList.innerHTML = '';
@@ -147,6 +158,27 @@ function formatTime(value) {
   }
 }
 
+function identitySummary(identity) {
+  const inbound = Array.isArray(identity.inbound) ? identity.inbound : [];
+  const clientHadIdentity = inbound.length > 0;
+
+  let operation;
+  if (identity.mode === 'upstream') operation = '原样交给上游';
+  else if (identity.mode === 'passthrough') operation = '原样透传';
+  else if (identity.mode === 'fill' && identity.source === 'client') operation = '沿用客户端身份';
+  else if (identity.mode === 'fill') operation = '补充并锁定';
+  else if (identity.mode === 'lock' && clientHadIdentity && identity.overwritten) operation = '覆盖并锁定';
+  else if (identity.mode === 'lock' && clientHadIdentity) operation = '确认并锁定';
+  else if (identity.mode === 'lock') operation = '新增并锁定';
+  else operation = '未知';
+
+  return {
+    clientHadIdentity,
+    operation,
+    overwritten: Boolean(identity.overwritten),
+  };
+}
+
 function diagNode(record) {
   const article = document.createElement('article');
   article.className = 'item diag';
@@ -158,6 +190,7 @@ function diagNode(record) {
   const comparison = record.comparison || {};
   const identity = record.identity || {};
   const bridge = identity.bridge || {};
+  const identityInfo = identitySummary(identity);
   const identityLabel = identity.mode === 'upstream' ? '上游自动管理' : identity.mode || '';
   const identityValue = identity.mode === 'upstream'
     ? '由上游派生'
@@ -180,7 +213,9 @@ function diagNode(record) {
       <div><span class="muted">CC Bridge</span><br>${escapeHtml(bridgeLabel)}</div>
       <div><span class="muted">身份模式</span><br>${escapeHtml(identityLabel)}${identity.profileName ? ` · ${escapeHtml(identity.profileName)}` : ''}</div>
       <div><span class="muted">身份值</span><br><code>${escapeHtml(identityValue)}</code></div>
-      <div><span class="muted">是否覆盖客户端</span><br>${identity.overwritten ? '是' : '否'}</div>
+      <div><span class="muted">客户端原有身份</span><br>${identityInfo.clientHadIdentity ? '有' : '无'}</div>
+      <div><span class="muted">网关身份操作</span><br>${escapeHtml(identityInfo.operation)}</div>
+      <div><span class="muted">是否覆盖客户端已有身份</span><br>${identityInfo.overwritten ? '是' : '否'}</div>
       <div><span class="muted">输入 tokens</span><br>${input ?? '未返回'}</div>
       <div><span class="muted">缓存 tokens</span><br>${cached ?? '未返回'}${hitRate !== null && hitRate !== undefined ? ` · ${hitRate}%` : ''}</div>
       <div><span class="muted">前序相同消息</span><br>${comparison.available ? comparison.equalMessages : '首次请求'}</div>
@@ -264,6 +299,8 @@ async function load() {
     setStatus(`错误：${error.message}`, 'warn');
   }
 }
+
+$('#client-interface-mode').addEventListener('change', updateInterfaceVisibility);
 
 $('#add-upstream').addEventListener('click', () => {
   const id = uuid();
