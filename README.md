@@ -50,6 +50,48 @@ Codex / 上游模型
 - 默认监听 `127.0.0.1:8790`
 - 项目目前没有第三方运行时依赖
 
+### Windows 安装示例
+
+在 PowerShell 中先安装 Node.js LTS 和 Git：
+
+```powershell
+winget install -e --id OpenJS.NodeJS.LTS
+winget install -e --id Git.Git
+```
+
+安装完成后重新打开 PowerShell，然后运行：
+
+```powershell
+git clone https://github.com/Roballz/codex-cache-proxy.git
+cd codex-cache-proxy
+npm start
+```
+
+### macOS / Linux 安装示例
+
+先安装 Node.js 22 或更高版本和 Git。
+
+macOS 如果已经安装 Homebrew，可直接运行：
+
+```bash
+brew install node git
+```
+
+Linux 请使用发行版包管理器、NodeSource、nvm 等方式安装 Node.js 22+ 和 Git；可先用下面两条命令确认版本：
+
+```bash
+node -v
+git --version
+```
+
+然后在 macOS 或 Linux 终端运行：
+
+```bash
+git clone https://github.com/Roballz/codex-cache-proxy.git
+cd codex-cache-proxy
+npm start
+```
+
 ### Termux 安装示例
 
 ```bash
