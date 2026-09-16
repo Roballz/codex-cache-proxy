@@ -8,7 +8,8 @@
 - API Key **不写入网关配置**，只转发客户端当前请求里的 `Authorization`；
 - 手动创建并锁定稳定的 Session/Cache Identity；
 - 支持 `lock`、`fill`、`passthrough` 三种身份模式；
-- 原样流式转发 Responses / Chat Completions；
+- 支持 Responses / Chat Completions 流式转发；
+- 为 Sub2API 提供实验性的 Responses-shaped Chat Bridge；
 - 观察上游返回的 `cached_tokens`，并比较相邻请求的稳定前缀；
 - 诊断默认仅存在内存，不保存完整剧情正文。
 
@@ -61,7 +62,7 @@ POST /v1/responses
 POST /v1/chat/completions
 ```
 
-Responses / Chat Completions 的 JSON 内容默认不做格式重排，复杂的 Codex 兼容转换继续交给 Sub2API/CPA。
+除显式启用 Responses Bridge 外，Responses / Chat Completions 的 JSON 内容默认不做格式转换，复杂的 Codex 兼容转换继续交给 Sub2API/CPA。
 
 ## 身份模式
 
@@ -85,7 +86,7 @@ body.prompt_cache_key = 固定 Session ID
 - `conversation`
 - tool `call_id`
 - Responses item id
-- `input/messages` 的文字和顺序
+- 普通转发模式下 `input/messages` 的文字和顺序
 
 ### 缺失时补齐（Fill）
 
@@ -94,6 +95,43 @@ body.prompt_cache_key = 固定 Session ID
 ### 原样透传（Passthrough）
 
 不修改身份相关字段，适合做 A/B 对照。
+
+## Chat Completions 模式
+
+### 原生 CC · 上游自动管理
+
+Chat Completions body 和客户端 identity 原样交给上游。适合对照 Sub2API 自己的 `compat_cc_*` 缓存行为。
+
+### 原生 CC · 跟随全局身份模式
+
+保留原始 `messages`，但按照上面的全局身份模式处理 session/cache identity。
+
+### Responses Bridge（实验）
+
+仅对 `Sub2API` 上游启用。
+
+TT/ST 仍请求：
+
+```text
+POST /v1/chat/completions
+```
+
+但网关会把兼容的纯文本 Chat Completions body 转成 Responses-shaped body：
+
+```text
+messages → input
+system/developer → developer
+assistant → message/output_text
+user → user
+max_tokens/max_completion_tokens → max_output_tokens
+reasoning_effort → reasoning.effort
+```
+
+URL 仍然保持 `/v1/chat/completions`，目的是触发 Sub2API 已有的 Responses-shaped Chat compatibility 分支，让 Sub2API 负责把 Codex Responses 回包继续转换成 Chat Completions 回给 TT/ST。
+
+Bridge 会继续使用“Responses / 全局身份模式”，因此可与固定 Session ID 一起测试。
+
+首版故意只支持保守的纯文本场景。如果请求包含 tools、function/tool 消息、多模态或其他无法安全映射的结构，会自动回退“原生 CC · 上游自动管理”，不会半转换后继续发送。诊断卡片中的 `CC Bridge` 会明确显示“已启用”或“已回退”。
 
 ## 会话档案
 
@@ -128,6 +166,7 @@ body.prompt_cache_key = 固定 Session ID
 管理页会显示：
 
 - 当前身份模式和固定 ID；
+- CC Bridge 是否启用或回退；
 - 是否覆盖了客户端身份；
 - 当前请求与上一请求有多少条消息完全一致；
 - 第一条变化消息的位置；
@@ -163,7 +202,7 @@ data/settings.json.bak
 - 上游名称 / URL / 类型；
 - 当前上游；
 - 会话名称 / 固定 ID；
-- identity 模式；
+- identity / Chat Completions 模式；
 - timeout / diagnostics 数量；
 - 允许的浏览器 Origin。
 
