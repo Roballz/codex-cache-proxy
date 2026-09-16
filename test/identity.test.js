@@ -5,6 +5,7 @@ import { applyIdentity } from '../lib/identity.js';
 function config(mode = 'lock') {
   return {
     identityMode: mode,
+    chatCompletionsIdentityMode: 'upstream',
     activeSessionId: 'profile-1',
     sessions: [{ id: 'profile-1', name: 'Story A', value: 'fixed-session-123' }],
   };
@@ -14,11 +15,14 @@ const sub2api = { adapter: 'sub2api' };
 const cpa = { adapter: 'cpa' };
 
 test('lock mode overwrites client identity with the selected profile', () => {
+  const cfg = config('lock');
+  cfg.chatCompletionsIdentityMode = 'global';
   const result = applyIdentity(
     { model: 'gpt-5.6-sol', prompt_cache_key: 'client-key' },
     { 'session-id': 'client-session', authorization: 'Bearer test' },
-    config('lock'),
+    cfg,
     sub2api,
+    '/v1/responses',
   );
 
   assert.equal(result.body.prompt_cache_key, 'fixed-session-123');
@@ -30,11 +34,14 @@ test('lock mode overwrites client identity with the selected profile', () => {
 });
 
 test('CPA adapter emits Session-Id style identity header', () => {
+  const cfg = config('lock');
+  cfg.chatCompletionsIdentityMode = 'global';
   const result = applyIdentity(
     { model: 'gpt-5.6-sol' },
     {},
-    config('lock'),
+    cfg,
     cpa,
+    '/v1/responses',
   );
 
   assert.equal(result.body.prompt_cache_key, 'fixed-session-123');
@@ -43,11 +50,14 @@ test('CPA adapter emits Session-Id style identity header', () => {
 });
 
 test('fill mode preserves one consistent client identity', () => {
+  const cfg = config('fill');
+  cfg.chatCompletionsIdentityMode = 'global';
   const result = applyIdentity(
     { model: 'gpt-5.6-sol', prompt_cache_key: 'client-stable' },
     { 'session-id': 'client-stable' },
-    config('fill'),
+    cfg,
     cpa,
+    '/v1/responses',
   );
 
   assert.equal(result.body.prompt_cache_key, 'client-stable');
@@ -56,13 +66,16 @@ test('fill mode preserves one consistent client identity', () => {
 });
 
 test('fill mode rejects conflicting client identities', () => {
+  const cfg = config('fill');
+  cfg.chatCompletionsIdentityMode = 'global';
   assert.throws(
     () =>
       applyIdentity(
         { prompt_cache_key: 'one' },
         { 'session-id': 'two' },
-        config('fill'),
+        cfg,
         cpa,
+        '/v1/responses',
       ),
     error => error.code === 'identity_conflict' && error.status === 409,
   );
@@ -71,9 +84,33 @@ test('fill mode rejects conflicting client identities', () => {
 test('passthrough mode does not mutate body or headers', () => {
   const body = { prompt_cache_key: 'original' };
   const headers = { 'session-id': 'original' };
-  const result = applyIdentity(body, headers, config('passthrough'), cpa);
+  const cfg = config('passthrough');
+  cfg.chatCompletionsIdentityMode = 'global';
+  const result = applyIdentity(body, headers, cfg, cpa, '/v1/responses');
 
   assert.equal(result.body, body);
   assert.equal(result.headers, headers);
   assert.equal(result.changed, false);
+});
+
+test('Chat upstream mode passes client identity through unchanged', () => {
+  const body = {
+    model: 'gpt-5.6-sol',
+    prompt_cache_key: 'client-cache-key',
+    messages: [{ role: 'user', content: 'hello' }],
+  };
+  const headers = {
+    authorization: 'Bearer test',
+    'session-id': 'client-session',
+    'x-session-id': 'client-x-session',
+  };
+
+  const result = applyIdentity(body, headers, config('lock'), sub2api, '/v1/chat/completions');
+
+  assert.equal(result.body, body);
+  assert.equal(result.headers, headers);
+  assert.equal(result.changed, false);
+  assert.equal(result.diagnostics.mode, 'upstream');
+  assert.deepEqual(result.diagnostics.inbound, result.diagnostics.outbound);
+  assert.equal(result.diagnostics.overwritten, false);
 });
