@@ -10,7 +10,7 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; }
+body { margin: 0; min-height: 100vh; overflow-x: hidden; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 
@@ -18,6 +18,7 @@ button { cursor: pointer; }
   width: min(960px, 100%);
   margin: 0 auto;
   padding: max(18px, env(safe-area-inset-top)) 16px max(36px, env(safe-area-inset-bottom));
+  min-width: 0;
 }
 
 .hero {
@@ -56,6 +57,7 @@ h2 { margin-bottom: 0; font-size: 19px; }
   padding: 16px;
   margin: 14px 0;
   background: var(--surface);
+  min-width: 0;
 }
 
 .section-head, .item-head, .actions, .row {
@@ -68,18 +70,19 @@ h2 { margin-bottom: 0; font-size: 19px; }
 .actions { margin: 16px 0; }
 .row { flex-wrap: wrap; }
 
-.stack { display: grid; gap: 12px; }
+.stack { display: grid; gap: 12px; min-width: 0; }
 .item {
   padding: 13px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: Canvas;
+  min-width: 0;
 }
 
-.grid { display: grid; gap: 12px; }
+.grid { display: grid; gap: 12px; min-width: 0; }
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-label { display: grid; gap: 6px; margin: 10px 0; }
+label { display: grid; gap: 6px; margin: 10px 0; min-width: 0; }
 label > span { font-size: 13px; color: var(--muted); }
 .radio-label { display: flex; align-items: center; gap: 8px; margin: 0; }
 
@@ -90,6 +93,7 @@ input, select, textarea {
   padding: 10px 11px;
   color: inherit;
   background: Canvas;
+  min-width: 0;
 }
 textarea { resize: vertical; min-height: 90px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
@@ -102,6 +106,16 @@ button {
 .primary { background: var(--accent); color: white; }
 .secondary { background: transparent; border-color: var(--border); color: inherit; }
 .danger { color: var(--danger); }
+.icon-button {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  font-size: 22px;
+  line-height: 1;
+}
 
 .hint { font-size: 13px; line-height: 1.5; }
 .note { font-size: 14px; }
@@ -111,13 +125,26 @@ button {
   display: grid;
   gap: 8px;
   font-size: 13px;
+  min-width: 0;
 }
 .diag-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px 12px;
+  min-width: 0;
 }
-.diag code { overflow-wrap: anywhere; }
+.diag code { overflow-wrap: anywhere; word-break: break-word; }
+.diag details { min-width: 0; max-width: 100%; }
+.diag details pre {
+  margin: 10px 0 0;
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow-x: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.45;
+}
 .muted { color: var(--muted); }
 .good { color: #2d8a4b; }
 .warn { color: #b16a00; }
