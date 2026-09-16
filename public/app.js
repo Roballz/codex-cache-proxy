@@ -66,21 +66,39 @@ function upstreamNode(item) {
   return node;
 }
 
+function updateSessionModeVisibility(node) {
+  const interfaceMode = node.querySelector('.interface-mode').value;
+  node.querySelector('.chat-mode-wrap').hidden = interfaceMode !== 'chat_completions';
+}
+
 function sessionNode(item) {
   const node = clone('session-template');
   node.dataset.id = item.id;
   node.querySelector('.name').value = item.name;
   node.querySelector('.value').value = item.value;
+  node.querySelector('.interface-mode').value = item.interfaceMode ?? 'chat_completions';
+  node.querySelector('.identity-mode').value = item.identityMode ?? 'lock';
+  node.querySelector('.chat-mode').value = ['upstream', 'bridge'].includes(item.chatMode)
+    ? item.chatMode
+    : 'upstream';
+  updateSessionModeVisibility(node);
+
   const radio = node.querySelector('input[type="radio"]');
   radio.checked = item.id === config.activeSessionId;
   radio.addEventListener('change', () => {
     config.activeSessionId = item.id;
   });
+
+  node.querySelector('.interface-mode').addEventListener('change', () => {
+    updateSessionModeVisibility(node);
+  });
+
   node.querySelector('.regen').addEventListener('click', () => {
     if (!confirm('重新生成后，当前会话将使用全新的固定 Session ID。继续吗？')) return;
     item.value = uuid();
     node.querySelector('.value').value = item.value;
   });
+
   node.querySelector('.remove').addEventListener('click', () => {
     if (config.sessions.length <= 1) {
       alert('至少保留一个会话档案。');
@@ -91,12 +109,6 @@ function sessionNode(item) {
     render();
   });
   return node;
-}
-
-function updateInterfaceVisibility() {
-  const mode = $('#client-interface-mode').value;
-  $('#responses-settings').hidden = mode !== 'responses';
-  $('#chat-settings').hidden = mode !== 'chat_completions';
 }
 
 function collectEditorValues() {
@@ -113,11 +125,11 @@ function collectEditorValues() {
     id: node.dataset.id,
     name: node.querySelector('.name').value.trim(),
     value: node.querySelector('.value').value.trim(),
+    interfaceMode: node.querySelector('.interface-mode').value,
+    identityMode: node.querySelector('.identity-mode').value,
+    chatMode: node.querySelector('.chat-mode').value,
   }));
 
-  config.clientInterfaceMode = $('#client-interface-mode').value;
-  config.identityMode = $('#identity-mode').value;
-  config.chatCompletionsIdentityMode = $('#cc-identity-mode').value;
   config.diagnosticLimit = Number($('#diagnostic-limit').value);
   config.timeoutSeconds = Number($('#timeout-seconds').value);
   config.allowedOrigins = $('#allowed-origins').value
@@ -127,15 +139,9 @@ function collectEditorValues() {
 }
 
 function render() {
-  $('#client-interface-mode').value = config.clientInterfaceMode ?? 'chat_completions';
-  $('#identity-mode').value = config.identityMode;
-  $('#cc-identity-mode').value = ['upstream', 'bridge'].includes(config.chatCompletionsIdentityMode)
-    ? config.chatCompletionsIdentityMode
-    : 'upstream';
   $('#diagnostic-limit').value = config.diagnosticLimit;
   $('#timeout-seconds').value = config.timeoutSeconds;
   $('#allowed-origins').value = config.allowedOrigins.join('\n');
-  updateInterfaceVisibility();
 
   const upstreamList = $('#upstream-list');
   upstreamList.innerHTML = '';
@@ -300,8 +306,6 @@ async function load() {
   }
 }
 
-$('#client-interface-mode').addEventListener('change', updateInterfaceVisibility);
-
 $('#add-upstream').addEventListener('click', () => {
   const id = uuid();
   config.upstreams.push({
@@ -316,7 +320,15 @@ $('#add-upstream').addEventListener('click', () => {
 
 $('#add-session').addEventListener('click', () => {
   const id = uuid();
-  config.sessions.push({ id, name: `RP ${config.sessions.length + 1}`, value: uuid() });
+  const current = config.sessions.find(item => item.id === config.activeSessionId);
+  config.sessions.push({
+    id,
+    name: `RP ${config.sessions.length + 1}`,
+    value: uuid(),
+    interfaceMode: current?.interfaceMode ?? 'chat_completions',
+    identityMode: current?.identityMode ?? 'lock',
+    chatMode: current?.chatMode ?? 'upstream',
+  });
   config.activeSessionId = id;
   render();
 });
