@@ -47,6 +47,25 @@ test('session stores interface, identity, and Chat mode independently', () => {
   }
 });
 
+test('reasoning summary toggle is global, persisted, and defaults off for old config', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'codex-cache-proxy-'));
+  try {
+    const store = new ConfigStore(directory);
+    assert.equal(store.snapshot().reasoningSummaryEnabled, false);
+
+    const next = store.snapshot();
+    next.reasoningSummaryEnabled = true;
+    const saved = store.save(next);
+    assert.equal(saved.reasoningSummaryEnabled, true);
+
+    const legacy = structuredClone(saved);
+    delete legacy.reasoningSummaryEnabled;
+    assert.equal(validateConfig(legacy).reasoningSummaryEnabled, false);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('legacy global mode fields migrate into every session', () => {
   const directory = mkdtempSync(join(tmpdir(), 'codex-cache-proxy-'));
   try {
