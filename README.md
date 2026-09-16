@@ -2,7 +2,7 @@
 
 一个面向 **TauriTavern / SillyTavern → Sub2API / CLIProxyAPI → Codex** 链路的本地轻量网关。
 
-主要用途是为不带/不发送session_id的客户端注入固定的identity请求参数，以解决Sub2api/CPA因每次自动生成添加不同session_id导致的掉缓存情况。
+主要用途是为不带/不发送session_id的客户端注入固定的identity请求参数，以解决Sub2api/CPA因每次自动生成添加不同session_id导致掉缓存的痛点。
 
 该网关不保存你的 API Key；同时把 **Session / Cache Identity、Responses / Chat Completions 兼容、可见推理摘要和缓存诊断** 这些容易影响长对话缓存的变量集中管理。
 
