@@ -26,14 +26,31 @@ test('config store persists the generated session identity', () => {
   }
 });
 
-test('config accepts the experimental Responses Bridge mode', () => {
+test('config accepts interface selection and Responses Bridge mode', () => {
   const directory = mkdtempSync(join(tmpdir(), 'codex-cache-proxy-'));
   try {
     const store = new ConfigStore(directory);
     const next = store.snapshot();
+    next.clientInterfaceMode = 'responses';
     next.chatCompletionsIdentityMode = 'bridge';
     const saved = store.save(next);
+    assert.equal(saved.clientInterfaceMode, 'responses');
     assert.equal(saved.chatCompletionsIdentityMode, 'bridge');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('legacy native Chat global mode migrates to upstream mode', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'codex-cache-proxy-'));
+  try {
+    const store = new ConfigStore(directory);
+    const legacy = store.snapshot();
+    delete legacy.clientInterfaceMode;
+    legacy.chatCompletionsIdentityMode = 'global';
+    const normalized = validateConfig(legacy);
+    assert.equal(normalized.clientInterfaceMode, 'chat_completions');
+    assert.equal(normalized.chatCompletionsIdentityMode, 'upstream');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
