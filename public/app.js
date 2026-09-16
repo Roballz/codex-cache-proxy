@@ -157,10 +157,16 @@ function diagNode(record) {
   const hitRate = record.usage?.hitRate;
   const comparison = record.comparison || {};
   const identity = record.identity || {};
+  const bridge = identity.bridge || {};
   const identityLabel = identity.mode === 'upstream' ? '上游自动管理' : identity.mode || '';
   const identityValue = identity.mode === 'upstream'
     ? '由上游派生'
     : identity.value || identity.source || '透传/未知';
+  const bridgeLabel = bridge.active
+    ? 'Responses Bridge 已启用'
+    : bridge.fallback
+      ? `已回退原生 CC${bridge.reason ? ` · ${bridge.reason}` : ''}`
+      : '未启用';
 
   article.innerHTML = `
     <div class="item-head">
@@ -171,6 +177,7 @@ function diagNode(record) {
       <div><span class="muted">时间</span><br>${escapeHtml(formatTime(record.startedAt))}</div>
       <div><span class="muted">上游</span><br>${escapeHtml(record.upstream || '')} (${escapeHtml(record.adapter || '')})</div>
       <div><span class="muted">路径</span><br><code>${escapeHtml(record.path || '')}</code></div>
+      <div><span class="muted">CC Bridge</span><br>${escapeHtml(bridgeLabel)}</div>
       <div><span class="muted">身份模式</span><br>${escapeHtml(identityLabel)}${identity.profileName ? ` · ${escapeHtml(identity.profileName)}` : ''}</div>
       <div><span class="muted">身份值</span><br><code>${escapeHtml(identityValue)}</code></div>
       <div><span class="muted">是否覆盖客户端</span><br>${identity.overwritten ? '是' : '否'}</div>
