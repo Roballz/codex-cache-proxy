@@ -47,6 +47,7 @@ test('usage extraction distinguishes missing cached_tokens from zero', () => {
   const missing = extractUsage({ usage: { input_tokens: 100, output_tokens: 10 } });
   assert.equal(missing.inputTokens, 100);
   assert.equal(missing.cachedTokens, null);
+  assert.equal(missing.reasoningTokens, null);
   assert.equal(missing.hitRate, null);
 
   const zero = extractUsage({
@@ -71,4 +72,24 @@ test('usage extraction calculates hit rate', () => {
 
   assert.equal(usage.cachedTokens, 64000);
   assert.equal(usage.hitRate, 80);
+});
+
+test('usage extraction reads reasoning tokens from Responses and Chat shapes', () => {
+  const responses = extractUsage({
+    usage: {
+      input_tokens: 100,
+      output_tokens: 40,
+      output_tokens_details: { reasoning_tokens: 24 },
+    },
+  });
+  assert.equal(responses.reasoningTokens, 24);
+
+  const chat = extractUsage({
+    usage: {
+      prompt_tokens: 100,
+      completion_tokens: 40,
+      completion_tokens_details: { reasoning_tokens: 19 },
+    },
+  });
+  assert.equal(chat.reasoningTokens, 19);
 });
