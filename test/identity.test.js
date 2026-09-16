@@ -90,47 +90,21 @@ test('passthrough mode does not mutate body or headers', () => {
   assert.equal(result.changed, false);
 });
 
-test('locked Responses request fills missing reasoning summary', () => {
-  const result = applyIdentity(
-    {
-      model: 'gpt-5.6-sol',
-      input: [{ role: 'user', content: 'hello' }],
-      reasoning: { effort: 'high' },
-    },
-    {},
-    config('lock'),
-    sub2api,
-    '/v1/responses',
-  );
-
-  assert.deepEqual(result.body.reasoning, { effort: 'high', summary: 'auto' });
-});
-
-test('fill mode preserves an explicit Responses reasoning summary', () => {
-  const result = applyIdentity(
-    {
-      model: 'gpt-5.6-sol',
-      input: [{ role: 'user', content: 'hello' }],
-      reasoning: { effort: 'medium', summary: 'concise' },
-    },
-    {},
-    config('fill'),
-    sub2api,
-    '/v1/responses',
-  );
-
-  assert.deepEqual(result.body.reasoning, { effort: 'medium', summary: 'concise' });
-});
-
-test('passthrough mode does not add reasoning summary', () => {
-  const body = {
-    model: 'gpt-5.6-sol',
-    input: [{ role: 'user', content: 'hello' }],
-    reasoning: { effort: 'high' },
-  };
-  const result = applyIdentity(body, {}, config('passthrough'), sub2api, '/v1/responses');
-  assert.equal(result.body, body);
-  assert.deepEqual(result.body.reasoning, { effort: 'high' });
+test('identity modes do not modify reasoning settings', () => {
+  for (const mode of ['lock', 'fill']) {
+    const result = applyIdentity(
+      {
+        model: 'gpt-5.6-sol',
+        input: [{ role: 'user', content: 'hello' }],
+        reasoning: { effort: 'high' },
+      },
+      {},
+      config(mode),
+      sub2api,
+      '/v1/responses',
+    );
+    assert.deepEqual(result.body.reasoning, { effort: 'high' });
+  }
 });
 
 test('Chat upstream mode passes client identity through unchanged', () => {
@@ -177,5 +151,5 @@ test('Chat bridge mode applies the selected session identity mode', () => {
   assert.equal(result.body.prompt_cache_key, 'fixed-session-123');
   assert.equal(result.headers.session_id, 'fixed-session-123');
   assert.equal(result.diagnostics.mode, 'lock');
-  assert.deepEqual(result.body.reasoning, { effort: 'high', summary: 'auto' });
+  assert.deepEqual(result.body.reasoning, { effort: 'high' });
 });
