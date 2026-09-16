@@ -42,13 +42,14 @@
       <p class="hint">强制锁定会覆盖客户端带来的 session/cache identity；不会修改 previous_response_id、conversation 或 tool call ID。</p>
 
       <label>
-        <span>Chat Completions 身份策略</span>
+        <span>Chat Completions 模式</span>
         <select id="cc-identity-mode">
-          <option value="upstream">交给上游自动管理（推荐用于 Sub2API）</option>
-          <option value="global">跟随上面的全局身份模式</option>
+          <option value="upstream">原生 CC · 交给上游自动管理</option>
+          <option value="global">原生 CC · 跟随全局身份模式</option>
+          <option value="bridge">Responses Bridge（实验）</option>
         </select>
       </label>
-      <p class="hint">“交给上游”只对 <code>/v1/chat/completions</code> 生效：网关不改写 session / prompt_cache_key 等身份字段或相关请求头，原样交给 Sub2API；messages 内容和顺序也不会被改写。</p>
+      <p class="hint">Responses Bridge 仅用于 Sub2API：TT 仍请求 <code>/v1/chat/completions</code>，网关把纯文本 messages 转成 Responses-shaped <code>input</code>，再应用上面的全局身份模式。遇到 tools、多模态或无法安全转换的消息时会自动回退原生 CC。</p>
 
       <div id="session-list" class="stack"></div>
     </section>
