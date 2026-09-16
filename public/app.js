@@ -192,6 +192,7 @@ function diagNode(record) {
 
   const cached = record.usage?.cachedTokens;
   const input = record.usage?.inputTokens;
+  const reasoningTokens = record.usage?.reasoningTokens;
   const hitRate = record.usage?.hitRate;
   const comparison = record.comparison || {};
   const identity = record.identity || {};
@@ -224,6 +225,7 @@ function diagNode(record) {
       <div><span class="muted">是否覆盖客户端已有身份</span><br>${identityInfo.overwritten ? '是' : '否'}</div>
       <div><span class="muted">输入 tokens</span><br>${input ?? '未返回'}</div>
       <div><span class="muted">缓存 tokens</span><br>${cached ?? '未返回'}${hitRate !== null && hitRate !== undefined ? ` · ${hitRate}%` : ''}</div>
+      <div><span class="muted">推理 tokens（模型内部推理）</span><br>${reasoningTokens ?? '未返回'}</div>
       <div><span class="muted">前序相同消息</span><br>${comparison.available ? comparison.equalMessages : '首次请求'}</div>
       <div><span class="muted">第一个变化消息</span><br>${comparison.available ? (comparison.firstChangedMessage ?? '无变化') : '—'}</div>
       <div><span class="muted">稳定前缀字节下限</span><br>${comparison.available ? comparison.prefixBytesLowerBound : '—'}</div>
