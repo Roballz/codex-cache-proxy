@@ -109,23 +109,23 @@ POST /v1/chat/completions
 
 ## 1. 上游
 
-### 当前
+- 当前
 
 选择这一项后，该上游会成为后续新请求使用的目标；已经开始的请求不会因为你之后切换上游而中途改变。
 
-### 名称
+- 名称
 
 只是管理页显示用的自定义名称，例如 `主 Sub2API`、`备用 CPA`，不会发送给模型。
 
-### 类型
+- 类型
 
 用于告诉网关上游属于哪种兼容类型，目前可选 `Sub2API`、`CLIProxyAPI`、`Generic`；不同类型主要影响 Session continuity header 的写法以及 Responses Bridge 是否可用。
 
-### Base URL
+- Base URL
 
 填写上游 API 根地址，例如 `https://example.com/v1`；如果误填到 `/responses`、`/chat/completions` 或 `/models`，保存时会自动规范回 `/v1` 根路径。
 
-### 添加 / 删除
+- 添加 / 删除
 
 “添加”创建一个新的上游配置，“删除”只删除本地配置，不会修改远端 Sub2API / CPA。
 
@@ -155,33 +155,33 @@ POST /v1/chat/completions
 
 创建新的会话档案，并生成新的固定 Session ID；新会话会继承当前会话的接口、身份模式和 Chat Completions 模式。
 
-### 当前
+- 当前
 
 选中的会话档案会用于后续请求；切换后需要点击“保存设置”才会持久化。
 
-### 名称
+- 名称
 
 会话的本地备注名，例如 `雪山篇`、`都市篇测试档`，只用于管理和诊断显示。
 
-### 固定 Session ID
+- 固定 Session ID
 
 这是网关在需要固定身份时使用的稳定值；除非你手动修改或点击“重新生成 ID”，刷新网页、切换模型、切换上游或重启网关都不会自动改变它。
 
-### 重新生成 ID
+- 重新生成 ID
 
 为当前会话生成一个全新的固定 Session ID；这相当于主动换一套新的会话 / 缓存身份，不建议在正在延续的长期 RP 中随意点击。
 
-### TT/ST 接口
+- TT/ST 接口
 
 记录这个会话在 TT/ST 侧实际使用的是 `Responses` 还是 `Chat Completions`，并据此决定管理页是否显示 Chat Completions 专属选项。
 
 > 这个选项不会远程修改 TT/ST 的接口；实际请求最终走 `/v1/responses` 还是 `/v1/chat/completions`，仍由 TT/ST 发给网关的 URL 决定，因此这里应与 TT/ST 当前配置保持一致。
 
-### 身份模式
+#### 身份模式
 
 决定网关如何处理 `prompt_cache_key`、session header 等 Session / Cache Identity。
 
-#### 强制锁定
+- 强制锁定
 
 始终使用当前会话档案的固定 Session ID；客户端已经带了不同身份时也会被覆盖，适合需要稳定 Cache Identity 的长期会话。
 
@@ -203,23 +203,23 @@ tool call_id
 普通 input/messages 文本内容和顺序
 ```
 
-#### 缺失时补齐
+- 缺失时补齐
 
 客户端没有身份时使用当前会话的固定 Session ID；如果客户端已经提供一个一致的身份则沿用客户端身份，如果多个身份字段互相冲突则拒绝请求而不是猜测使用哪一个。
 
-#### 原样透传
+- 原样透传
 
 完全不修改 Session / Cache Identity，适合做 A/B 对照或让客户端 / 上游自己管理会话身份。
 
-### Chat Completions 模式
+#### Chat Completions 模式
 
 只有会话的 `TT/ST 接口` 选择 `Chat Completions` 时显示。
 
-#### 交给上游自动管理
+- 交给上游自动管理
 
 保持原生 Chat Completions body 和客户端 identity，不应用本会话的身份模式，由 Sub2API / CPA 等上游自行派生或管理 Chat Completions 的缓存 / 会话身份。
 
-#### Responses Bridge（实验）
+- Responses Bridge（实验）
 
 仅针对 `Sub2API` 上游；TT/ST 仍请求 `/v1/chat/completions`，但网关先把兼容的纯文本 Chat Completions body 转成 Responses-shaped `input`，再按当前会话的身份模式处理 identity。
 
