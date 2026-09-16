@@ -26,16 +26,44 @@ test('config store persists the generated session identity', () => {
   }
 });
 
-test('config accepts interface selection and Responses Bridge mode', () => {
+test('session stores interface, identity, and Chat mode independently', () => {
   const directory = mkdtempSync(join(tmpdir(), 'codex-cache-proxy-'));
   try {
     const store = new ConfigStore(directory);
     const next = store.snapshot();
-    next.clientInterfaceMode = 'responses';
-    next.chatCompletionsIdentityMode = 'bridge';
+    next.sessions[0].interfaceMode = 'responses';
+    next.sessions[0].identityMode = 'fill';
+    next.sessions[0].chatMode = 'bridge';
     const saved = store.save(next);
-    assert.equal(saved.clientInterfaceMode, 'responses');
-    assert.equal(saved.chatCompletionsIdentityMode, 'bridge');
+
+    assert.equal(saved.sessions[0].interfaceMode, 'responses');
+    assert.equal(saved.sessions[0].identityMode, 'fill');
+    assert.equal(saved.sessions[0].chatMode, 'bridge');
+    assert.equal(saved.clientInterfaceMode, undefined);
+    assert.equal(saved.identityMode, undefined);
+    assert.equal(saved.chatCompletionsIdentityMode, undefined);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('legacy global mode fields migrate into every session', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'codex-cache-proxy-'));
+  try {
+    const store = new ConfigStore(directory);
+    const legacy = store.snapshot();
+    legacy.clientInterfaceMode = 'responses';
+    legacy.identityMode = 'fill';
+    legacy.chatCompletionsIdentityMode = 'bridge';
+    legacy.sessions = legacy.sessions.map(({ id, name, value }) => ({ id, name, value }));
+
+    const normalized = validateConfig(legacy);
+    assert.equal(normalized.sessions[0].interfaceMode, 'responses');
+    assert.equal(normalized.sessions[0].identityMode, 'fill');
+    assert.equal(normalized.sessions[0].chatMode, 'bridge');
+    assert.equal(normalized.clientInterfaceMode, undefined);
+    assert.equal(normalized.identityMode, undefined);
+    assert.equal(normalized.chatCompletionsIdentityMode, undefined);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -46,11 +74,10 @@ test('legacy native Chat global mode migrates to upstream mode', () => {
   try {
     const store = new ConfigStore(directory);
     const legacy = store.snapshot();
-    delete legacy.clientInterfaceMode;
     legacy.chatCompletionsIdentityMode = 'global';
+    legacy.sessions = legacy.sessions.map(({ id, name, value }) => ({ id, name, value }));
     const normalized = validateConfig(legacy);
-    assert.equal(normalized.clientInterfaceMode, 'chat_completions');
-    assert.equal(normalized.chatCompletionsIdentityMode, 'upstream');
+    assert.equal(normalized.sessions[0].chatMode, 'upstream');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
