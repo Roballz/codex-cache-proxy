@@ -130,6 +130,7 @@ function collectEditorValues() {
     chatMode: node.querySelector('.chat-mode').value,
   }));
 
+  config.reasoningSummaryEnabled = $('#reasoning-summary-enabled').checked;
   config.diagnosticLimit = Number($('#diagnostic-limit').value);
   config.timeoutSeconds = Number($('#timeout-seconds').value);
   config.allowedOrigins = $('#allowed-origins').value
@@ -139,6 +140,7 @@ function collectEditorValues() {
 }
 
 function render() {
+  $('#reasoning-summary-enabled').checked = config.reasoningSummaryEnabled === true;
   $('#diagnostic-limit').value = config.diagnosticLimit;
   $('#timeout-seconds').value = config.timeoutSeconds;
   $('#allowed-origins').value = config.allowedOrigins.join('\n');
