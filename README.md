@@ -2,9 +2,11 @@
 
 一个面向 **TauriTavern / SillyTavern → Sub2API / CLIProxyAPI → Codex** 链路的本地轻量网关。
 
-它不替代 Sub2API / CLIProxyAPI，也不保存你的 API Key；主要用途是把 **Session / Cache Identity、Responses / Chat Completions 兼容、可见推理摘要和缓存诊断** 这些容易影响长对话缓存的变量集中管理起来。
+主要用途是为不带/不发送session_id的客户端注入固定的identity请求参数，以解决Sub2api/CPA因每次自动生成添加不同session_id导致的掉缓存情况。
 
-> 网关只能保证“它发给下一跳的请求”符合当前配置，不能保证 Codex 一定命中缓存，也不能直接观察 Sub2API / CLIProxyAPI 最终发给 Codex 的内部请求。
+该网关不保存你的 API Key；同时把 **Session / Cache Identity、Responses / Chat Completions 兼容、可见推理摘要和缓存诊断** 这些容易影响长对话缓存的变量集中管理。
+
+> 网关只保证“它发给下一跳的请求”符合codex的session_id缓存策略，不解决 Codex 侧自身缓存不稳/降智的问题。
 
 ## 功能概览
 
