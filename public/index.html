@@ -31,25 +31,38 @@
         <h2>会话锁定</h2>
         <button id="add-session" class="secondary">新建会话</button>
       </div>
-      <label>
-        <span>Responses / 全局身份模式</span>
-        <select id="identity-mode">
-          <option value="lock">强制锁定</option>
-          <option value="fill">缺失时补齐</option>
-          <option value="passthrough">原样透传</option>
-        </select>
-      </label>
-      <p class="hint">强制锁定会覆盖客户端带来的 session/cache identity；不会修改 previous_response_id、conversation 或 tool call ID。</p>
 
       <label>
-        <span>Chat Completions 模式</span>
-        <select id="cc-identity-mode">
-          <option value="upstream">原生 CC · 交给上游自动管理</option>
-          <option value="global">原生 CC · 跟随全局身份模式</option>
-          <option value="bridge">Responses Bridge（实验）</option>
+        <span>TT/ST 接口</span>
+        <select id="client-interface-mode">
+          <option value="responses">Responses</option>
+          <option value="chat_completions">Chat Completions</option>
         </select>
       </label>
-      <p class="hint">Responses Bridge 仅用于 Sub2API：TT 仍请求 <code>/v1/chat/completions</code>，网关把纯文本 messages 转成 Responses-shaped <code>input</code>，再应用上面的全局身份模式。遇到 tools、多模态或无法安全转换的消息时会自动回退原生 CC。</p>
+      <p class="hint">这里选择你在 TT/ST 侧实际使用的接口格式，只影响下面显示的会话设置，不改写 TT/ST 的请求路径。</p>
+
+      <div id="responses-settings">
+        <label>
+          <span>Responses / 全局身份模式</span>
+          <select id="identity-mode">
+            <option value="lock">强制锁定</option>
+            <option value="fill">缺失时补齐</option>
+            <option value="passthrough">原样透传</option>
+          </select>
+        </label>
+        <p class="hint">强制锁定会使用当前会话档案的固定身份；不会修改 previous_response_id、conversation 或 tool call ID。</p>
+      </div>
+
+      <div id="chat-settings">
+        <label>
+          <span>Chat Completions 模式</span>
+          <select id="cc-identity-mode">
+            <option value="upstream">交给上游自动管理</option>
+            <option value="bridge">Responses Bridge（实验）</option>
+          </select>
+        </label>
+        <p class="hint">Responses Bridge 仅用于 Sub2API：TT 仍请求 <code>/v1/chat/completions</code>，网关把纯文本 messages 转成 Responses-shaped <code>input</code>，再使用当前全局身份模式。遇到 tools、多模态或无法安全转换的消息时会自动回退原生 CC。</p>
+      </div>
 
       <div id="session-list" class="stack"></div>
     </section>
